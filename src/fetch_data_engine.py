@@ -8,16 +8,16 @@ from datetime import datetime, timezone
 from fetch_data import key
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, select
-from sqlalchemy.orm import Session
 import time
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-}
 
-load_dotenv()
+
+
 
 def get_symbols_df():
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
     url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
     response = requests.get(url,headers=headers)
     sp500 = pd.read_html(response.text)[0]
@@ -40,23 +40,38 @@ def get_engine():
 
 
 
-def fetch_items():
-    all_responses = []
+def fetch_prices():
+    os.makedirs("data/raw_backups", exist_ok=True)
     engine = get_engine()
     symbols = get_symbols_df()
+    all_rows = []
+
     for symbol in symbols:
-        url=f"https://api.twelvedata.com/time_series?apikey={key}&symbol={symbol}&interval=1day&type=stock&format=json"
+        url = f"https://api.twelvedata.com/time_series?apikey={key}&symbol={symbol}&interval=1day&format=json"
         try:
-            res = requests.get(url=url,headers=headers)
+            res = requests.get(url=url)
             if res.status_code == 200:
-                all_responses.append(res.json())
+                data = res.json()
+                all_rows.append({
+                    "symbol": symbol,
+                    "fetched_at": datetime.now(timezone.utc),
+                    "source_api": "twelvedata",
+                    "interval": "1day",
+                    "raw_json": json.dumps(data),
+                })
                 print(f"Fetched {symbol}")
             else:
-
                 print(f"Failed {symbol}: {res.status_code}")
-
-            time.sleep(1)
         except Exception as e:
             print(f"Error fetching {symbol}: {e}")
 
-    print(f"Fetched {len(all_responses)} symbols")
+        time.sleep(8)
+
+    raw_df = pd.DataFrame(all_rows)
+    raw_df.to_json("data/raw_backups/raw_prices_backup.json", orient="records")  # local safety net
+
+    raw_df.to_sql("raw_prices", engine, if_exists="append", index=False)
+    print(f"Inserted {len(raw_df)} rows into raw_prices")
+
+if __name__ == "__main__":
+    fetch_prices()
