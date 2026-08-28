@@ -3,15 +3,8 @@ import json
 import pandas as pd
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
-
+from engine_init import get_engine
 load_dotenv()
-
-
-def get_engine():
-    server = os.getenv("DB_SERVER", "localhost")
-    database = os.getenv("DB_NAME", "StockPrices")
-    conn_str = f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
-    return create_engine(conn_str)
 
 
 def load_raw_prices(engine):

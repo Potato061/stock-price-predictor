@@ -9,6 +9,7 @@ from fetch_data import key
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, select
 import time
+from engine_init import get_engine
 
 
 
@@ -32,11 +33,7 @@ def get_symbols_df():
     return SYMBOLS
 
 
-def get_engine():
-    server = os.getenv("DB_SERVER","localhost")
-    database = os.getenv("DB_NAME","StockPrices")
-    conn_str = f"mssql+pyodbc://@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
-    return create_engine(conn_str)
+
 
 
 
