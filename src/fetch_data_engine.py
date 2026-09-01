@@ -44,7 +44,7 @@ def fetch_prices():
     all_rows = []
 
     for symbol in symbols:
-        url = f"https://api.twelvedata.com/time_series?apikey={key}&symbol={symbol}&interval=1day&format=json"
+        url = f"https://api.twelvedata.com/time_series?apikey={key}&symbol={symbol}&interval=1day&outputsize=5000&format=json"
         try:
             res = requests.get(url=url)
             if res.status_code == 200:

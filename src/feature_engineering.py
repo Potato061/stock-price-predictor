@@ -12,7 +12,6 @@ import time
 from engine_init import get_engine
 from sqlalchemy import text
 
-
 def load_stg_prices(engine) :
     query = text("SELECT * FROM stg_prices")
     with engine.connect() as conn:
@@ -44,10 +43,15 @@ class FeatureBuilder:
     def build(self):
         return self.df.dropna()
 
+    def add_target(self):
+        self.df['target_next_return'] = self.df.groupby('symbol')['daily_return'].shift(-1)
+        return self
+
 
 
 def main():
     engine = get_engine()
+
     stg_df = load_stg_prices(engine)
 
     builder = (
@@ -56,6 +60,7 @@ def main():
         .add_returns()
         .add_moving_averages()
         .add_volatility()
+        .add_target()
     )
     features_df = builder.build()
 
@@ -70,7 +75,7 @@ def main():
         "symbol", "price_datetime", "open_price", "high_price",
         "low_price", "close_price", "volume",
         "prev_close", "daily_return", "ma_5", "ma_20", "volatility_10",
-        "built_at",
+        "built_at","target_next_return"
     ]
     features_df = features_df[final_cols]
 
