@@ -1,14 +1,11 @@
-from engine_init import get_engine
+from engine_init import get_engine, TableFetcher
 import pandas as pd
 from sqlalchemy import text
 
 engine = get_engine()
 
 
-def load_curated_features(engine):
-    query = text("SELECT * FROM curated_features ORDER BY symbol,price_datetime")
-    with engine.connect() as conn:
-        return pd.read_sql(query, conn)
+
 
 def temporal_split_(dataset, test_split=0.2):
     dataset = dataset.sort_values(["symbol", "price_datetime"]).copy()
@@ -28,7 +25,8 @@ def temporal_split_(dataset, test_split=0.2):
 
 if __name__ == "__main__":
     engine = get_engine()
-    df = load_curated_features(engine)
+    fetcher = TableFetcher(engine)
+    df = fetcher.fetch_curated_features()
     train_df, test_df = temporal_split_(df)
 
     """
